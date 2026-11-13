@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/base :: layout('Dashboard', ~{::#content})}">
+<body>
+<div id="content">
+
+    <!-- Hero Banner -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="findit-card position-relative overflow-hidden p-4 p-lg-5" 
+                 style="background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.18), transparent 50%), var(--bg-card);">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <span class="badge badge-ai-chip mb-3">
+                            <i class="fa-solid fa-sparkles me-1"></i> AUTOMATED RECOVERY PLATFORM
+                        </span>
+                        <h1 class="display-6 fw-bold text-white mb-2">
+                            Reuniting People with What Matters Most.
+                        </h1>
+                        <p class="text-secondary fs-6 mb-4 col-lg-10">
+                            FindIt uses intelligent fuzzy matching, temporal proximity, and attribute correlation to instantly connect lost belongings with turned-in items.
+                        </p>
+                        <div class="d-flex flex-wrap gap-3">
+                            <a th:href="@{/items/report(type='LOST')}" class="btn btn-outline-danger px-4 py-2 rounded-pill fw-semibold">
+                                <i class="fa-solid fa-circle-exclamation me-2"></i> Report Lost Item
+                            </a>
+                            <a th:href="@{/items/report(type='FOUND')}" class="btn btn-primary-gradient px-4 py-2 rounded-pill text-white fw-semibold">
+                                <i class="fa-solid fa-hand-holding-hand me-2"></i> Report Found Item
+                            </a>
+                            <a th:href="@{/items}" class="btn btn-icon-glass px-3 py-2 rounded-pill text-white fw-medium">
+                                <i class="fa-solid fa-compass me-1"></i> Browse Catalog
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 d-none d-lg-block text-center">
+                        <div class="p-4 rounded-4" style="background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-color);">
+                            <i class="fa-solid fa-shield-cat fa-4x text-primary mb-3"></i>
+                            <h6 class="text-white fw-bold mb-1">Smart Match Engine Active</h6>
+                            <p class="text-muted small mb-0">Multi-factor algorithmic verification enabled</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="findit-card stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon stat-lost">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-medium">Total Lost Items</div>
+                    <div class="fs-3 fw-bold text-white" th:text="${stats.totalLost}">0</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-sm-6 col-xl-3">
+            <div class="findit-card stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon stat-found">
+                    <i class="fa-solid fa-box-archive"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-medium">Total Found Items</div>
+                    <div class="fs-3 fw-bold text-white" th:text="${stats.totalFound}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="findit-card stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon stat-match">
+                    <i class="fa-solid fa-diagram-project"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-medium">Smart Matches</div>
+                    <div class="fs-3 fw-bold text-white" th:text="${stats.matchedCount}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="findit-card stat-card d-flex align-items-center gap-3">
+                <div class="stat-icon stat-resolved">
+                    <i class="fa-solid fa-handshake-angle"></i>
+                </div>
+                <div>
+                    <div class="text-muted small fw-medium">Recovery Rate</div>
+                    <div class="fs-3 fw-bold text-white" th:text="${stats.recoveryRate + '%'}">0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Smart Match Recommendations Banner (If Any Match Exists) -->
+    <div th:if="${systemMatches != null and !systemMatches.empty}" class="row mb-4">
+        <div class="col-12">
+            <div class="findit-card border-primary p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="brand-icon small" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </span>
+                        <div>
+                            <h5 class="text-white fw-bold mb-0">High-Confidence Smart Matches Detected</h5>
+                            <small class="text-muted">Our AI engine discovered potential matches between open lost and found items</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-primary px-3 py-2 rounded-pill" th:text="${systemMatches.size() + ' Potential Pairs'}">0 Pairs</span>
+                </div>
+
+                <div class="row g-3">
+                    <div th:each="m, iter : ${systemMatches}" th:if="${iter.index < 3}" class="col-lg-4">
+                        <div class="p-3 rounded-3" style="background: #172033; border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge" th:classappend="${m.confidenceBadgeClass}" th:text="${m.percentage + '% MATCH'}">90%</span>
+                                <small class="text-muted" th:text="${m.lostItem.category.displayName}">Category</small>
+                            </div>
+                            
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="text-truncate me-2" style="max-width: 45%;">
+                                    <span class="badge badge-lost me-1">Lost</span>
+                                    <strong class="text-white small d-block text-truncate" th:text="${m.lostItem.title}">Lost Item</strong>
+                                </div>
+                                <i class="fa-solid fa-arrow-right-arrow-left text-muted"></i>
+                                <div class="text-truncate text-end ms-2" style="max-width: 45%;">
+                                    <span class="badge badge-found me-1">Found</span>
+                                    <strong class="text-white small d-block text-truncate" th:text="${m.foundItem.title}">Found Item</strong>
+                                </div>
+                            </div>
+
+                            <p class="text-secondary small mb-3 text-truncate" th:text="${m.matchReasons[0]}">Reason</p>
+
+                            <a th:href="@{/items/{id}/matches(id=${m.lostItem.id})}" class="btn btn-outline-primary btn-sm w-100 rounded-pill">
+                                Inspect Match & Reconcile <i class="fa-solid fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area: Recent Items + Category Analytics -->
+    <div class="row g-4">
+        <!-- Recent Items Feed -->
+        <div class="col-lg-8">
+            <div class="findit-card">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h5 class="text-white fw-bold mb-0">Recent Items Feed</h5>
+                        <small class="text-muted">Latest reports submitted by students and campus staff</small>
+                    </div>
+                    <a th:href="@{/items}" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                        View All <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="row g-3">
+                    <div th:each="item : ${recentItems}" class="col-md-6">
+                        <div class="findit-card p-3 h-100 d-flex flex-column" style="background: #172033;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge" th:classappend="${item.type.badgeClass}" th:text="${item.type.displayName}">Type</span>
+                                <span class="badge" th:classappend="${item.status.cssClass}" th:text="${item.status.label}">Status</span>
+                            </div>
+                            
+                            <h6 class="text-white fw-bold mb-1 text-truncate">
+                                <a th:href="@{/items/{id}(id=${item.id})}" class="text-white text-decoration-none" th:text="${item.title}">Title</a>
+                            </h6>
+
+                            <p class="text-muted small mb-2 text-truncate-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" th:text="${item.description}">
+                                Description
+                            </p>
+
+                            <div class="mt-auto pt-2 border-top border-secondary border-opacity-25 small text-secondary">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span><i class="fa-solid fa-location-dot me-1 text-danger"></i> <span th:text="${item.location}">Location</span></span>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span><i class="fa-regular fa-calendar me-1"></i> <span th:text="${item.dateOccurred}">Date</span></span>
+                                    <a th:href="@{/items/{id}(id=${item.id})}" class="btn btn-sm btn-outline-primary rounded-pill py-0 px-2">
+                                        Details <i class="fa-solid fa-chevron-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Distribution & Fast Links -->
+        <div class="col-lg-4">
+            <div class="findit-card mb-4">
+                <h5 class="text-white fw-bold mb-1">Categories Breakdown</h5>
+                <small class="text-muted d-block mb-3">Live distribution across lost & found categories</small>
+                
+                <div style="height: 240px; position: relative;">
+                    <canvas id="categoryDistributionChart" 
+                            th:data-labels="${#strings.listJoin(categoryLabels, ',')}"
+                            th:data-values="${#strings.listJoin(categoryValues, ',')}">
+                    </canvas>
+                </div>
+            </div>
+
+            <!-- Quick Action Box -->
+            <div class="findit-card text-center p-4">
+                <div class="brand-icon mx-auto mb-3" style="width: 50px; height: 50px; font-size: 1.3rem;">
+                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                </div>
+                <h6 class="text-white fw-bold mb-1">Admin Verification Desk</h6>
+                <p class="text-muted small mb-3">Staff members can verify claimants and hand over items with security codes.</p>
+                <a th:href="@{/claims}" class="btn btn-outline-warning w-100 rounded-pill">
+                    <i class="fa-solid fa-clipboard-check me-1"></i> Open Claims Desk
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

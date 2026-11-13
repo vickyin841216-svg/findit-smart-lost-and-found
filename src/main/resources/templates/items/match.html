@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/base :: layout('Smart Matches for ' + ${item.title}, ~{::#content})}">
+<body>
+<div id="content">
+
+    <!-- Top Header -->
+    <div class="findit-card mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <a th:href="@{/items/{id}(id=${item.id})}" class="text-muted text-decoration-none small mb-1 d-inline-block">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Item Details
+                </a>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="brand-icon small" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </span>
+                    <h4 class="text-white fw-bold mb-0">Smart Match Algorithm Analysis</h4>
+                </div>
+                <p class="text-muted small mt-1 mb-0">
+                    Evaluating <strong class="text-white" th:text="${item.title}">Item</strong> against candidate turned-in items.
+                </p>
+            </div>
+            
+            <span class="badge badge-ai-chip fs-6 py-2 px-3">
+                <i class="fa-solid fa-microchip me-1"></i> MULTI-FACTOR HEURISTIC ENGINE
+            </span>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${matches == null or matches.empty}" class="findit-card text-center py-5">
+        <i class="fa-solid fa-radar fa-4x text-muted mb-3"></i>
+        <h5 class="text-white fw-bold">No Matching Items Detected Yet</h5>
+        <p class="text-muted col-md-6 mx-auto mb-4">
+            Our multi-vector algorithm didn't find any candidate item crossing the similarity threshold. FindIt continuously monitors new incoming reports and will send a notification if a match appears.
+        </p>
+        <a th:href="@{/items}" class="btn btn-primary-gradient text-white rounded-pill px-4">
+            Browse All Items
+        </a>
+    </div>
+
+    <!-- Matches Comparison Cards -->
+    <div th:if="${matches != null and !matches.empty}" class="d-flex flex-column gap-4">
+        <div th:each="m : ${matches}" class="findit-card p-4">
+            <div class="row align-items-center g-4">
+                
+                <!-- Match Score Dial -->
+                <div class="col-lg-2 text-center border-end-lg border-secondary border-opacity-25">
+                    <div class="score-circle mx-auto mb-2" 
+                         th:classappend="${m.overallScore < 0.75 ? 'amber' : ''}">
+                        <span th:text="${m.percentage + '%'}">88%</span>
+                    </div>
+                    <span class="badge" th:classappend="${m.confidenceBadgeClass}" th:text="${m.confidenceLabel}">
+                        HIGH MATCH
+                    </span>
+                    <small class="text-muted d-block mt-2">Overall Score</small>
+                </div>
+
+                <!-- Matched Items Comparison (Lost vs Found) -->
+                <div class="col-lg-6">
+                    <div class="d-flex align-items-center justify-content-between mb-3 p-3 rounded-3" style="background: #172033;">
+                        <!-- Lost Item Card -->
+                        <div style="max-width: 45%;">
+                            <span class="badge badge-lost mb-1">Lost Item</span>
+                            <h6 class="text-white fw-bold mb-1 text-truncate">
+                                <a th:href="@{/items/{id}(id=${m.lostItem.id})}" class="text-white text-decoration-none" th:text="${m.lostItem.title}">Lost Item</a>
+                            </h6>
+                            <small class="text-muted d-block text-truncate"><i class="fa-solid fa-location-dot text-danger me-1"></i><span th:text="${m.lostItem.location}">Location</span></small>
+                            <small class="text-muted d-block"><i class="fa-regular fa-calendar me-1"></i><span th:text="${m.lostItem.dateOccurred}">Date</span></small>
+                        </div>
+
+                        <div class="text-center px-2">
+                            <i class="fa-solid fa-arrows-left-right fa-lg text-primary"></i>
+                        </div>
+
+                        <!-- Found Item Card -->
+                        <div class="text-end" style="max-width: 45%;">
+                            <span class="badge badge-found mb-1">Found Item</span>
+                            <h6 class="text-white fw-bold mb-1 text-truncate">
+                                <a th:href="@{/items/{id}(id=${m.foundItem.id})}" class="text-white text-decoration-none" th:text="${m.foundItem.title}">Found Item</a>
+                            </h6>
+                            <small class="text-muted d-block text-truncate"><i class="fa-solid fa-location-dot text-success me-1"></i><span th:text="${m.foundItem.location}">Location</span></small>
+                            <small class="text-muted d-block"><i class="fa-regular fa-calendar me-1"></i><span th:text="${m.foundItem.dateOccurred}">Date</span></small>
+                        </div>
+                    </div>
+
+                    <!-- Algorithm Match Reasons -->
+                    <h6 class="text-white fw-bold mb-2 small"><i class="fa-solid fa-check-double text-success me-1"></i> Why this is a match:</h6>
+                    <ul class="list-unstyled mb-0 small text-secondary">
+                        <li th:each="reason : ${m.matchReasons}" class="mb-1">
+                            <i class="fa-solid fa-circle-check text-primary me-2"></i>
+                            <span th:text="${reason}">Reason</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Detailed Sub-Factor Breakdown Progress Bars -->
+                <div class="col-lg-4 border-start-lg border-secondary border-opacity-25">
+                    <h6 class="text-white fw-bold mb-3 small">Vector Breakdown</h6>
+                    
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Category Alignment (25%)</span>
+                            <strong class="text-white" th:text="${m.categoryPercentage + '%'}">100%</strong>
+                        </div>
+                        <div class="progress progress-dark">
+                            <div class="progress-bar bg-primary" th:style="'width: ' + ${m.categoryPercentage} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Title & Description Text (35%)</span>
+                            <strong class="text-white" th:text="${m.textPercentage + '%'}">85%</strong>
+                        </div>
+                        <div class="progress progress-dark">
+                            <div class="progress-bar bg-info" th:style="'width: ' + ${m.textPercentage} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Location Proximity (20%)</span>
+                            <strong class="text-white" th:text="${m.locationPercentage + '%'}">90%</strong>
+                        </div>
+                        <div class="progress progress-dark">
+                            <div class="progress-bar bg-success" th:style="'width: ' + ${m.locationPercentage} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Temporal Window (10%)</span>
+                            <strong class="text-white" th:text="${m.datePercentage + '%'}">95%</strong>
+                        </div>
+                        <div class="progress progress-dark">
+                            <div class="progress-bar bg-warning" th:style="'width: ' + ${m.datePercentage} + '%'"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a th:href="@{/items/{id}(id=${m.foundItem.id})}" class="btn btn-primary-gradient text-white btn-sm rounded-pill py-2 fw-semibold">
+                            <i class="fa-solid fa-hand-holding-hand me-1"></i> Proceed to Claim Found Item
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

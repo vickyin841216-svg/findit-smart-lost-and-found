@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/base :: layout('Catalog', ~{::#content})}">
+<body>
+<div id="content">
+
+    <!-- Page Header & Filter Form -->
+    <div class="findit-card mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+                <h4 class="text-white fw-bold mb-1">Browse Lost & Found Catalog</h4>
+                <p class="text-muted small mb-0">Search through all reported items with real-time keyword and category filtering</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/items/report(type='LOST')}" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                    <i class="fa-solid fa-plus me-1"></i> Report Lost
+                </a>
+                <a th:href="@{/items/report(type='FOUND')}" class="btn btn-primary-gradient btn-sm text-white rounded-pill px-3">
+                    <i class="fa-solid fa-plus me-1"></i> Report Found
+                </a>
+            </div>
+        </div>
+
+        <form method="get" th:action="@{/items}" class="row g-2 align-items-center">
+            <!-- Keyword search -->
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-secondary text-muted">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" name="keyword" th:value="${keyword}" class="form-control" 
+                           placeholder="Search by name, brand, color, location...">
+                </div>
+            </div>
+
+            <!-- Type Filter -->
+            <div class="col-md-2">
+                <select name="type" class="form-select">
+                    <option value="" th:selected="${selectedType == null}">All Types</option>
+                    <option value="LOST" th:selected="${selectedType != null and selectedType.name() == 'LOST'}">Lost Only</option>
+                    <option value="FOUND" th:selected="${selectedType != null and selectedType.name() == 'FOUND'}">Found Only</option>
+                </select>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="col-md-3">
+                <select name="category" class="form-select">
+                    <option value="" th:selected="${selectedCategory == null}">All Categories</option>
+                    <option th:each="cat : ${categories}" 
+                            th:value="${cat}" 
+                            th:text="${cat.displayName}"
+                            th:selected="${selectedCategory != null and selectedCategory == cat}">Category</option>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="" th:selected="${selectedStatus == null}">All Statuses</option>
+                    <option value="OPEN" th:selected="${selectedStatus != null and selectedStatus.name() == 'OPEN'}">Open</option>
+                    <option value="MATCHED" th:selected="${selectedStatus != null and selectedStatus.name() == 'MATCHED'}">Matched</option>
+                    <option value="UNDER_REVIEW" th:selected="${selectedStatus != null and selectedStatus.name() == 'UNDER_REVIEW'}">In Review</option>
+                    <option value="CLAIMED" th:selected="${selectedStatus != null and selectedStatus.name() == 'CLAIMED'}">Claimed</option>
+                </select>
+            </div>
+
+            <!-- Actions -->
+            <div class="col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-primary w-100 rounded-3" title="Apply Filter">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+                <a th:href="@{/items}" class="btn btn-outline-secondary rounded-3" title="Reset Filters">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Items Grid -->
+    <div th:if="${items != null and !items.empty}" class="row g-4">
+        <div th:each="item : ${items}" class="col-md-6 col-lg-4">
+            <div class="findit-card h-100 d-flex flex-column p-3">
+                <!-- Image or Placeholder -->
+                <div class="item-img-container mb-3">
+                    <img th:if="${item.imageUrl != null and !item.imageUrl.isBlank()}" 
+                         th:src="${item.imageUrl}" th:alt="${item.title}"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="item-img-placeholder" th:style="${item.imageUrl != null and !item.imageUrl.isBlank()} ? 'display:none;' : ''">
+                        <i class="fa-solid fa-3x mb-2" th:classappend="${item.category.iconClass}"></i>
+                        <span class="small" th:text="${item.category.displayName}">Category</span>
+                    </div>
+                    <!-- Badges overlay -->
+                    <div class="position-absolute top-0 start-0 m-2">
+                        <span class="badge" th:classappend="${item.type.badgeClass}" th:text="${item.type.displayName}">Type</span>
+                    </div>
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge" th:classappend="${item.status.cssClass}" th:text="${item.status.label}">Status</span>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <h6 class="text-white fw-bold mb-1 text-truncate">
+                    <a th:href="@{/items/{id}(id=${item.id})}" class="text-white text-decoration-none" th:text="${item.title}">Title</a>
+                </h6>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-dark border border-secondary text-secondary small" th:text="${item.category.displayName}">Category</span>
+                    <span th:if="${item.brand != null and !item.brand.isBlank()}" class="badge bg-dark border border-secondary text-secondary small" th:text="${item.brand}">Brand</span>
+                </div>
+
+                <p class="text-muted small mb-3 flex-grow-1 text-truncate-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" th:text="${item.description}">
+                    Description
+                </p>
+
+                <!-- Footer details -->
+                <div class="pt-2 border-top border-secondary border-opacity-25 small text-secondary">
+                    <div class="mb-1 text-truncate">
+                        <i class="fa-solid fa-location-dot me-1 text-danger"></i>
+                        <span th:text="${item.location}">Location</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span><i class="fa-regular fa-calendar me-1"></i> <span th:text="${item.dateOccurred}">Date</span></span>
+                        
+                        <div class="d-flex gap-1">
+                            <a th:href="@{/items/{id}/matches(id=${item.id})}" class="btn btn-sm btn-outline-warning rounded-pill px-2" title="Find Smart Matches">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </a>
+                            <a th:href="@{/items/{id}(id=${item.id})}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${items == null or items.empty}" class="findit-card text-center py-5">
+        <i class="fa-solid fa-magnifying-glass-chart fa-4x text-muted mb-3"></i>
+        <h5 class="text-white fw-bold">No Items Found</h5>
+        <p class="text-muted small mb-3">We couldn't find any lost or found items matching your search criteria.</p>
+        <a th:href="@{/items}" class="btn btn-outline-light rounded-pill px-4">
+            Reset Filters
+        </a>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/base :: layout(${item.title}, ~{::#content})}">
+<body>
+<div id="content">
+
+    <!-- Top Breadcrumb & Actions -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <a th:href="@{/items}" class="text-muted text-decoration-none small">
+            <i class="fa-solid fa-arrow-left me-1"></i> Back to Catalog
+        </a>
+        <div class="d-flex gap-2">
+            <a th:href="@{/items/{id}/matches(id=${item.id})}" class="btn btn-outline-warning btn-sm rounded-pill px-3">
+                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Run Smart Match AI
+            </a>
+            <button th:if="${item.found and item.status.name() != 'CLAIMED'}" 
+                    type="button" class="btn btn-primary-gradient btn-sm text-white rounded-pill px-4" 
+                    data-bs-toggle="modal" data-bs-target="#claimModal">
+                <i class="fa-solid fa-hand-holding-hand me-1"></i> Claim This Item
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Item Details Column -->
+        <div class="col-lg-8">
+            <div class="findit-card mb-4">
+                <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge" th:classappend="${item.type.badgeClass}" th:text="${item.type.displayName}">Type</span>
+                            <span class="badge" th:classappend="${item.status.cssClass}" th:text="${item.status.label}">Status</span>
+                            <span class="badge bg-dark border border-secondary text-secondary" th:text="${item.category.displayName}">Category</span>
+                        </div>
+                        <h3 class="text-white fw-bold mb-1" th:text="${item.title}">Item Title</h3>
+                        <div class="text-muted small">
+                            <i class="fa-regular fa-clock me-1"></i> Reported on <span th:text="${#temporals.format(item.createdAt, 'dd MMM yyyy, hh:mm a')}">Date</span>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="text-muted small d-block">Item ID</span>
+                        <code class="text-info fw-bold" th:text="'#' + ${item.id}">#1</code>
+                    </div>
+                </div>
+
+                <!-- Item Image or Category Banner -->
+                <div class="item-img-container mb-4" style="height: 320px;">
+                    <img th:if="${item.imageUrl != null and !item.imageUrl.isBlank()}" 
+                         th:src="${item.imageUrl}" th:alt="${item.title}"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="item-img-placeholder" th:style="${item.imageUrl != null and !item.imageUrl.isBlank()} ? 'display:none;' : ''">
+                        <i class="fa-solid fa-5x mb-3" th:classappend="${item.category.iconClass}"></i>
+                        <h5 class="text-muted" th:text="${item.category.displayName}">Category</h5>
+                    </div>
+                </div>
+
+                <!-- Attributes Grid -->
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6 col-md-3">
+                        <div class="p-3 rounded-3" style="background: #172033; border: 1px solid var(--border-color);">
+                            <small class="text-muted d-block">Brand</small>
+                            <strong class="text-white" th:text="${item.brand != null and !item.brand.isBlank() ? item.brand : 'Not Specified'}">Brand</strong>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="p-3 rounded-3" style="background: #172033; border: 1px solid var(--border-color);">
+                            <small class="text-muted d-block">Model / Version</small>
+                            <strong class="text-white" th:text="${item.modelNumber != null and !item.modelNumber.isBlank() ? item.modelNumber : 'N/A'}">Model</strong>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="p-3 rounded-3" style="background: #172033; border: 1px solid var(--border-color);">
+                            <small class="text-muted d-block">Color</small>
+                            <strong class="text-white" th:text="${item.color != null and !item.color.isBlank() ? item.color : 'N/A'}">Color</strong>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <div class="p-3 rounded-3" style="background: #172033; border: 1px solid var(--border-color);">
+                            <small class="text-muted d-block">Date Occurred</small>
+                            <strong class="text-white" th:text="${item.dateOccurred}">Date</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location Information -->
+                <div class="p-3 rounded-3 mb-4" style="background: #172033; border: 1px solid var(--border-color);">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <small class="text-muted d-block"><i class="fa-solid fa-location-dot text-danger me-1"></i> Location Where Lost/Found</small>
+                            <span class="text-white fw-medium" th:text="${item.location}">Location</span>
+                        </div>
+                        <div class="col-md-6" th:if="${item.storageLocation != null and !item.storageLocation.isBlank()}">
+                            <small class="text-muted d-block"><i class="fa-solid fa-box-archive text-success me-1"></i> Current Storage Desk</small>
+                            <span class="text-white fw-medium" th:text="${item.storageLocation}">Storage Desk</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-4">
+                    <h6 class="text-white fw-bold mb-2">Detailed Description</h6>
+                    <p class="text-secondary" style="white-space: pre-line;" th:text="${item.description}">Description</p>
+                </div>
+
+                <!-- Contact & Reporter Info -->
+                <div class="border-top border-secondary border-opacity-25 pt-3">
+                    <h6 class="text-white fw-bold mb-2"><i class="fa-solid fa-id-badge me-2 text-primary"></i>Reporter Information</h6>
+                    <div class="d-flex flex-wrap gap-4 text-secondary small">
+                        <div><strong class="text-white">Name:</strong> <span th:text="${item.contactName}">Name</span></div>
+                        <div><strong class="text-white">Email:</strong> <span th:text="${item.contactEmail}">Email</span></div>
+                        <div th:if="${item.contactPhone != null and !item.contactPhone.isBlank()}">
+                            <strong class="text-white">Phone:</strong> <span th:text="${item.contactPhone}">Phone</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing Claims on This Item (If any) -->
+            <div class="findit-card" th:if="${itemClaims != null and !itemClaims.empty}">
+                <h5 class="text-white fw-bold mb-3"><i class="fa-solid fa-file-shield me-2 text-warning"></i>Ownership Claims History</h5>
+                <div class="table-responsive">
+                    <table class="table table-custom">
+                        <thead>
+                            <tr>
+                                <th>Claimant</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                                <th>Handover PIN</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="c : ${itemClaims}">
+                                <td>
+                                    <strong class="text-white d-block" th:text="${c.claimantName}">Claimant</strong>
+                                    <small class="text-muted" th:text="${c.claimantEmail}">email</small>
+                                </td>
+                                <td th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy')}">Date</td>
+                                <td>
+                                    <span class="badge" th:classappend="${c.status.cssClass}" th:text="${c.status.label}">Status</span>
+                                </td>
+                                <td>
+                                    <code th:if="${c.verificationCode != null}" class="text-warning fw-bold fs-6" th:text="${c.verificationCode}">123456</code>
+                                    <span th:if="${c.verificationCode == null}" class="text-muted small">—</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Smart Matches Recommendation Widget -->
+        <div class="col-lg-4">
+            <div class="findit-card sticky-top" style="top: 80px;">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="brand-icon small" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </span>
+                        <h6 class="text-white fw-bold mb-0">AI Smart Matches</h6>
+                    </div>
+                    <a th:href="@{/items/{id}/matches(id=${item.id})}" class="small text-primary text-decoration-none">
+                        View All <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
+                    </a>
+                </div>
+
+                <div th:if="${smartMatches != null and !smartMatches.empty}">
+                    <div th:each="m : ${smartMatches}" class="p-3 rounded-3 mb-3" style="background: #172033; border: 1px solid var(--border-color);">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge" th:classappend="${m.confidenceBadgeClass}" th:text="${m.percentage + '% MATCH'}">88%</span>
+                            <span class="text-muted small" th:text="${m.foundItem.dateOccurred}">Date</span>
+                        </div>
+                        <h6 class="text-white fw-bold mb-1 text-truncate">
+                            <a th:href="@{/items/{id}(id=${item.isLost() ? m.foundItem.id : m.lostItem.id})}" class="text-white text-decoration-none" 
+                               th:text="${item.isLost() ? m.foundItem.title : m.lostItem.title}">
+                                Title
+                            </a>
+                        </h6>
+                        <small class="text-muted d-block text-truncate mb-2" 
+                               th:text="${item.isLost() ? m.foundItem.location : m.lostItem.location}">
+                            Location
+                        </small>
+                        <p class="text-secondary small mb-2" th:text="${m.matchReasons[0]}">Reason</p>
+                        
+                        <div class="d-flex gap-2">
+                            <a th:href="@{/items/{id}/matches(id=${item.id})}" class="btn btn-outline-primary btn-sm w-100 rounded-pill">
+                                Analyze Match <i class="fa-solid fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${smartMatches == null or smartMatches.empty}" class="text-center py-4">
+                    <i class="fa-solid fa-radar fa-2x text-muted mb-2"></i>
+                    <p class="text-muted small mb-0">No automated matches detected yet. As soon as a matching item is reported, FindIt will notify you!</p>
+                </div>
+
+                <hr class="border-secondary border-opacity-25 my-3">
+
+                <!-- Fast Actions -->
+                <div class="d-grid gap-2">
+                    <a th:if="${item.found and item.status.name() != 'CLAIMED'}" 
+                       href="#" class="btn btn-primary-gradient text-white rounded-pill py-2 fw-semibold"
+                       data-bs-toggle="modal" data-bs-target="#claimModal">
+                        <i class="fa-solid fa-shield-check me-2"></i> Submit Ownership Claim
+                    </a>
+                    <a th:href="@{/items/report(type=${item.isLost() ? 'FOUND' : 'LOST'})}" 
+                       class="btn btn-outline-light rounded-pill py-2 btn-sm">
+                        <i class="fa-solid fa-plus me-1"></i> Report Another Item
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Claim Submission Modal -->
+<div class="modal fade" id="claimModal" tabindex="-1" aria-labelledby="claimModalLabel" aria-hidden="true" th:if="${item.found}">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold" id="claimModalLabel">
+                    <i class="fa-solid fa-shield-halved text-primary me-2"></i> Claim Ownership
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form th:action="@{/items/{id}/claim(id=${item.id})}" method="post">
+                <div class="modal-body">
+                    <p class="text-secondary small mb-3">
+                        To claim <strong class="text-white" th:text="${item.title}">Item</strong>, please answer security verification details that prove you are the rightful owner.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="claimantName">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" id="claimantName" name="claimantName" class="form-control" required placeholder="Your legal name">
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label" for="claimantEmail">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" id="claimantEmail" name="claimantEmail" class="form-control" required placeholder="name@email.com">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label" for="claimantPhone">Phone Number</label>
+                            <input type="tel" id="claimantPhone" name="claimantPhone" class="form-control" placeholder="+1-555-0199">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="proofDescription">Proof of Ownership / Distinguishing Marks <span class="text-danger">*</span></label>
+                        <textarea id="proofDescription" name="proofDescription" rows="3" class="form-control" required 
+                                  placeholder="Describe non-public details: contents inside, lock screen wallpaper, specific stickers, purchase invoice details, or hidden scratches..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="serialNumberProvided">Serial Number / Unique ID (If Known)</label>
+                        <input type="text" id="serialNumberProvided" name="serialNumberProvided" class="form-control" 
+                               placeholder="e.g. Serial #, Student ID card number inside">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary-gradient text-white rounded-pill px-4 fw-bold">
+                        <i class="fa-solid fa-paper-plane me-1"></i> Submit Claim
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

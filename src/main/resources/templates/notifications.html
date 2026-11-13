@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/base :: layout('Notifications', ~{::#content})}">
+<body>
+<div id="content">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="findit-card mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="brand-icon"><i class="fa-solid fa-bell"></i></span>
+                        <div>
+                            <h4 class="text-white fw-bold mb-0">System Notifications & Alerts</h4>
+                            <small class="text-muted">Smart match detections, claim status updates, and reports</small>
+                        </div>
+                    </div>
+                    
+                    <form th:action="@{/notifications/read-all}" method="post">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-check-double me-1"></i> Mark All as Read
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${notifications == null or notifications.empty}" class="findit-card text-center py-5">
+                <i class="fa-regular fa-bell-slash fa-3x text-muted mb-3"></i>
+                <h5 class="text-white fw-bold">No Notifications</h5>
+                <p class="text-muted small">You're all caught up! New alerts and match findings will appear here.</p>
+            </div>
+
+            <!-- Notifications List -->
+            <div th:if="${notifications != null and !notifications.empty}" class="d-flex flex-column gap-3">
+                <div th:each="n : ${notifications}" 
+                     class="findit-card p-3 d-flex align-items-start justify-content-between gap-3"
+                     th:style="${!n.read ? 'border-left: 4px solid var(--primary); background: #161e31;' : 'opacity: 0.8;'}">
+                    
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="stat-icon" style="width: 40px; height: 40px; font-size: 1rem; border-radius: 10px;"
+                             th:classappend="${n.notificationType == 'MATCH_ALERT' ? 'stat-match' : (n.notificationType == 'CLAIM_APPROVED' ? 'stat-found' : 'stat-lost')}">
+                            <i th:class="${n.notificationType == 'MATCH_ALERT' ? 'fa-solid fa-wand-magic-sparkles' : (n.notificationType == 'CLAIM_APPROVED' ? 'fa-solid fa-shield-check' : 'fa-solid fa-circle-info')}"></i>
+                        </div>
+
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h6 class="text-white fw-bold mb-0" th:text="${n.title}">Notification Title</h6>
+                                <span th:if="${!n.read}" class="badge bg-primary" style="font-size: 0.65rem;">NEW</span>
+                            </div>
+                            <p class="text-secondary small mb-2" th:text="${n.message}">Message body</p>
+                            
+                            <div class="d-flex align-items-center gap-3 small text-muted">
+                                <span><i class="fa-regular fa-clock me-1"></i> <span th:text="${#temporals.format(n.createdAt, 'dd MMM yyyy, hh:mm a')}">Time</span></span>
+                                <span><i class="fa-regular fa-user me-1"></i> To: <span th:text="${n.recipientEmail}">User</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2 text-end">
+                        <a th:if="${n.relatedItemId != null}" 
+                           th:href="@{/items/{id}(id=${n.relatedItemId})}" 
+                           class="btn btn-outline-light btn-sm rounded-pill px-3">
+                            View Item <i class="fa-solid fa-arrow-right ms-1"></i>
+                        </a>
+
+                        <form th:if="${!n.read}" th:action="@{/notifications/{id}/read(id=${n.id})}" method="post">
+                            <button type="submit" class="btn btn-link text-muted btn-sm p-0 text-decoration-none">
+                                <i class="fa-solid fa-check me-1"></i> Mark Read
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

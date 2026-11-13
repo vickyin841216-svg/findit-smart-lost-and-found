@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/base :: layout('Report Item', ~{::#content})}">
+<body>
+<div id="content">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="findit-card">
+                <div class="d-flex align-items-center gap-3 mb-4 border-bottom border-secondary border-opacity-25 pb-3">
+                    <span class="brand-icon"><i class="fa-solid fa-file-pen"></i></span>
+                    <div>
+                        <h4 class="text-white fw-bold mb-0">Report an Item</h4>
+                        <small class="text-muted">Provide accurate details to assist our AI smart matching algorithm</small>
+                    </div>
+                </div>
+
+                <form th:action="@{/items/report}" th:object="${item}" method="post">
+                    
+                    <!-- Item Type Selector (LOST vs FOUND) -->
+                    <div class="mb-4">
+                        <label class="form-label d-block">What are you reporting?</label>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <input type="radio" class="btn-check" name="type" id="typeLost" value="LOST" 
+                                       th:field="*{type}" th:checked="*{type == null or type.name() == 'LOST'}">
+                                <label class="btn btn-outline-danger w-100 p-3 rounded-3 text-start d-flex align-items-center gap-3" for="typeLost">
+                                    <i class="fa-solid fa-circle-exclamation fa-2x"></i>
+                                    <div>
+                                        <strong class="d-block text-white">I Lost Something</strong>
+                                        <small class="text-muted">Search & match with turned-in items</small>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-sm-6">
+                                <input type="radio" class="btn-check" name="type" id="typeFound" value="FOUND" 
+                                       th:field="*{type}" th:checked="*{type != null and type.name() == 'FOUND'}">
+                                <label class="btn btn-outline-success w-100 p-3 rounded-3 text-start d-flex align-items-center gap-3" for="typeFound">
+                                    <i class="fa-solid fa-hand-holding-hand fa-2x"></i>
+                                    <div>
+                                        <strong class="d-block text-white">I Found Something</strong>
+                                        <small class="text-muted">Help reunite it with its owner</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Category & Title -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label" for="category">Category <span class="text-danger">*</span></label>
+                            <select id="category" th:field="*{category}" class="form-select" required>
+                                <option value="" disabled selected>Select Category</option>
+                                <option th:each="cat : ${categories}" 
+                                        th:value="${cat}" 
+                                        th:text="${cat.displayName}">Category</option>
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label" for="title">Item Title / Summary <span class="text-danger">*</span></label>
+                            <input type="text" id="title" th:field="*{title}" class="form-control" 
+                                   placeholder="e.g. Space Gray MacBook Pro 14, Blue Fossil Leather Wallet" required>
+                        </div>
+                    </div>
+
+                    <!-- Brand, Model, Color -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label" for="brand">Brand / Manufacturer</label>
+                            <input type="text" id="brand" th:field="*{brand}" class="form-control" placeholder="e.g. Apple, Sony, Nike, Fossil">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="modelNumber">Model / Version</label>
+                            <input type="text" id="modelNumber" th:field="*{modelNumber}" class="form-control" placeholder="e.g. M2 Pro, WH-1000XM5">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="color">Primary Color(s)</label>
+                            <input type="text" id="color" th:field="*{color}" class="form-control" placeholder="e.g. Black, Navy Blue, Silver">
+                        </div>
+                    </div>
+
+                    <!-- Location & Date -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-7">
+                            <label class="form-label" for="location">Location Where Lost or Found <span class="text-danger">*</span></label>
+                            <input type="text" id="location" th:field="*{location}" class="form-control" 
+                                   placeholder="e.g. Science Block, 3rd Floor Quiet Study Room 302" required>
+                        </div>
+                        <div class="col-md-5">
+                            <label class="form-label" for="dateOccurred">Date <span class="text-danger">*</span></label>
+                            <input type="date" id="dateOccurred" th:field="*{dateOccurred}" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <!-- Storage Location (Applicable for FOUND items) -->
+                    <div class="mb-3" id="storageLocationWrapper" 
+                         th:style="*{type != null and type.name() == 'FOUND'} ? 'display:block;' : 'display:none;'">
+                        <label class="form-label" for="storageLocation">Storage Locker / Safe Location (Desk)</label>
+                        <input type="text" id="storageLocation" th:field="*{storageLocation}" class="form-control" 
+                               placeholder="e.g. Central Security Office Locker #104, Admin Shelf B">
+                        <small class="text-muted">Where the item is physically safely kept until claimed.</small>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label class="form-label" for="description">Detailed Description <span class="text-danger">*</span></label>
+                        <textarea id="description" th:field="*{description}" rows="3" class="form-control" 
+                                  placeholder="Describe distinguishing marks, scratches, stickers, contents inside, or unique characteristics that help our smart matching engine..." required></textarea>
+                    </div>
+
+                    <!-- Secret Mark / Serial Number -->
+                    <div class="mb-3 p-3 rounded-3" style="background: rgba(99, 102, 241, 0.06); border: 1px dashed var(--border-color);">
+                        <label class="form-label text-white d-flex align-items-center gap-2" id="secretMarkLabel" for="serialNumberOrSecretMark">
+                            <i class="fa-solid fa-lock text-warning"></i> Serial Number / Secret Identifier
+                        </label>
+                        <input type="text" id="serialNumberOrSecretMark" th:field="*{serialNumberOrSecretMark}" class="form-control" 
+                               placeholder="e.g. Serial #, IMEI, engraved initials, hidden sticker, or card number">
+                        <small class="text-muted d-block mt-1" id="secretMarkHelp">
+                            This identifier will be used to automatically verify ownership and validate claims.
+                        </small>
+                    </div>
+
+                    <!-- Photo Image URL -->
+                    <div class="mb-3">
+                        <label class="form-label" for="imageUrlInput">Photo Image URL (Optional)</label>
+                        <input type="url" id="imageUrlInput" th:field="*{imageUrl}" class="form-control" 
+                               placeholder="https://images.unsplash.com/... or hosted image link">
+                        
+                        <!-- Image Preview Box -->
+                        <div id="imagePreviewContainer" class="mt-2 d-none" style="max-width: 250px;">
+                            <img id="previewImg" src="" alt="Preview" class="img-fluid rounded-3 border border-secondary">
+                        </div>
+                    </div>
+
+                    <!-- Contact Details Section -->
+                    <div class="border-top border-secondary border-opacity-25 pt-3 mt-4">
+                        <h6 class="text-white fw-bold mb-3"><i class="fa-solid fa-address-book me-2 text-primary"></i>Reporter Contact Information</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label" for="contactName">Your Name <span class="text-danger">*</span></label>
+                                <input type="text" id="contactName" th:field="*{contactName}" class="form-control" placeholder="e.g. Alex Morgan" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label" for="contactEmail">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" id="contactEmail" th:field="*{contactEmail}" class="form-control" placeholder="e.g. alex@university.edu" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="contactPhone">Phone Number</label>
+                                <input type="tel" id="contactPhone" th:field="*{contactPhone}" class="form-control" placeholder="e.g. +1-555-0123">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <a th:href="@{/items}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary-gradient text-white rounded-pill px-5 fw-bold">
+                            <i class="fa-solid fa-paper-plane me-2"></i> Submit & Run Smart Match
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

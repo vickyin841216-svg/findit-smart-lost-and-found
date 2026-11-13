@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" 
+      th:replace="~{layout/base :: layout('Claims Verification Desk', ~{::#content})}">
+<body>
+<div id="content">
+
+    <!-- Header -->
+    <div class="findit-card mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <span class="brand-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                <div>
+                    <h4 class="text-white fw-bold mb-0">Claims Verification Desk</h4>
+                    <small class="text-muted">Review ownership proofs, issue handover security PINs, and record releases</small>
+                </div>
+            </div>
+            <div>
+                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">
+                    <i class="fa-solid fa-clipboard-check me-1"></i> Staff Portal
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Claims Table Card -->
+    <div class="findit-card">
+        <div th:if="${claims == null or claims.empty}" class="text-center py-5">
+            <i class="fa-solid fa-folder-open fa-3x text-muted mb-3"></i>
+            <h5 class="text-white fw-bold">No Claims Submitted Yet</h5>
+            <p class="text-muted small">When users submit ownership claims for found items, they will appear here for staff verification.</p>
+        </div>
+
+        <div th:if="${claims != null and !claims.empty}" class="table-responsive">
+            <table class="table table-custom">
+                <thead>
+                    <tr>
+                        <th>Claim ID</th>
+                        <th>Claimed Item</th>
+                        <th>Claimant</th>
+                        <th>Proof & Serial</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="c : ${claims}">
+                        <td>
+                            <code class="text-info fw-bold" th:text="'#' + ${c.id}">#1</code>
+                            <div class="text-muted" style="font-size: 0.75rem;" th:text="${#temporals.format(c.createdAt, 'dd MMM yyyy')}">Date</div>
+                        </td>
+
+                        <td>
+                            <strong class="text-white d-block text-truncate" style="max-width: 200px;">
+                                <a th:href="@{/items/{id}(id=${c.item.id})}" class="text-white text-decoration-none" th:text="${c.item.title}">Item</a>
+                            </strong>
+                            <small class="text-muted d-block" th:if="${c.item.storageLocation != null}">
+                                <i class="fa-solid fa-box-archive text-success me-1"></i> <span th:text="${c.item.storageLocation}">Locker</span>
+                            </small>
+                        </td>
+
+                        <td>
+                            <strong class="text-white d-block" th:text="${c.claimantName}">Claimant Name</strong>
+                            <div class="text-muted small"><i class="fa-regular fa-envelope me-1"></i><span th:text="${c.claimantEmail}">email</span></div>
+                            <div class="text-muted small" th:if="${c.claimantPhone != null and !c.claimantPhone.isBlank()}">
+                                <i class="fa-solid fa-phone me-1"></i><span th:text="${c.claimantPhone}">phone</span>
+                            </div>
+                        </td>
+
+                        <td style="max-width: 250px;">
+                            <div class="text-secondary small text-truncate-2 mb-1" th:text="${c.proofDescription}">Proof</div>
+                            <div th:if="${c.serialNumberProvided != null and !c.serialNumberProvided.isBlank()}">
+                                <small class="text-muted">Serial/ID: </small>
+                                <code class="text-light" th:text="${c.serialNumberProvided}">12345</code>
+                            </div>
+                        </td>
+
+                        <td>
+                            <span class="badge" th:classappend="${c.status.cssClass}" th:text="${c.status.label}">Status</span>
+                            
+                            <!-- Display Pickup Code if Approved -->
+                            <div th:if="${c.verificationCode != null}" class="mt-2">
+                                <span class="badge bg-dark border border-warning text-warning d-inline-flex align-items-center gap-1">
+                                    <i class="fa-solid fa-key"></i>
+                                    <span th:text="${c.verificationCode}">123456</span>
+                                </span>
+                                <button type="button" class="btn btn-sm btn-link text-muted p-0 ms-1" 
+                                        th:onclick="'copyToClipboard(\'' + ${c.verificationCode} + '\', this)'" title="Copy PIN">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                            </div>
+                        </td>
+
+                        <td>
+                            <!-- Action buttons based on status -->
+                            <!-- PENDING STATE: Approve or Reject -->
+                            <div th:if="${c.status.name() == 'PENDING'}" class="d-flex gap-1">
+                                <form th:action="@{/claims/{id}/approve(id=${c.id})}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-2" title="Approve Claim">
+                                        <i class="fa-solid fa-check me-1"></i> Approve
+                                    </button>
+                                </form>
+                                <form th:action="@{/claims/{id}/reject(id=${c.id})}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Reject Claim">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- APPROVED STATE: Handover PIN Verification -->
+                            <div th:if="${c.status.name() == 'APPROVED'}">
+                                <form th:action="@{/claims/{id}/verify-pickup(id=${c.id})}" method="post" class="d-flex gap-1 align-items-center">
+                                    <input type="text" name="verificationCode" class="form-control form-control-sm" 
+                                           style="width: 90px;" placeholder="Enter PIN" required>
+                                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-2" title="Confirm Physical Pickup">
+                                        Handover
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- COMPLETED / REJECTED STATE -->
+                            <div th:if="${c.status.name() == 'COMPLETED'}">
+                                <span class="text-success small fw-semibold"><i class="fa-solid fa-circle-check me-1"></i> Handed Over</span>
+                            </div>
+                            <div th:if="${c.status.name() == 'REJECTED'}">
+                                <span class="text-muted small">Closed</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
